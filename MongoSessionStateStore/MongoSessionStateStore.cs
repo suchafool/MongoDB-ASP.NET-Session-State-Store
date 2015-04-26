@@ -8,7 +8,6 @@ using MongoDB.Driver;
 using MongoDB.Bson;
 using System.Diagnostics;
 using System.IO;
-using MongoDB.Driver.Builders;
 using System.Web;
 using System.Linq;
 
@@ -24,8 +23,6 @@ namespace MongoSessionStateStore
         private ConnectionStringSettings _connectionStringSettings;
         private string _applicationName;
         private string _connectionString;
-        private string _databaseName;
-        private string _collectionName;
         private bool _writeExceptionsToEventLog;
         internal const string EXCEPTION_MESSAGE = "An exception occurred. Please contact your administrator.";
         internal const string EVENT_SOURCE = "MongoSessionStateStore";
@@ -34,7 +31,6 @@ namespace MongoSessionStateStore
         private int _msWaitingForAttempt = 500;
         private bool _autoCreateTTLIndex = true;
         private WriteConcern _writeConcern;
-        public bool _BSONDefaultSerialize = true;
 
         /// <summary>
         /// The ApplicationName property is used to differentiate sessions
@@ -88,19 +84,18 @@ namespace MongoSessionStateStore
         /// </summary>
         /// <param name="conn">MongoDB server connection</param>
         /// <returns>MongoCollection</returns>
-        private MongoCollection<BsonDocument> GetSessionCollection(MongoServer conn)
+        private IMongoCollection<BsonDocument> GetSessionCollection(MongoClient conn)
         {
-            return conn.GetDatabase(_databaseName).GetCollection(_collectionName);
+            return conn.GetDatabase("SessionState").GetCollection<BsonDocument>("Sessions");
         }
 
         /// <summary>
         /// Returns a connection to the MongoDB server holding the session state data.
         /// </summary>
         /// <returns>MongoServer</returns>
-        private MongoServer GetConnection()
+        private MongoClient GetConnection()
         {
-            var client = new MongoClient(_connectionString);
-            return client.GetServer();
+            return new MongoClient(_connectionString);
         }
 
         /// <summary>
@@ -123,17 +118,6 @@ namespace MongoSessionStateStore
                 config.Add("description", "MongoDB Session State Store provider");
             }
 
-            _databaseName = "SessionState";
-            var databaseNameStr = this.GetConfigVal(config, "databaseName");
-            if(!string.IsNullOrEmpty(databaseNameStr))            
-                _databaseName = databaseNameStr;
-
-            _collectionName = "Sessions";
-            var collectionNameStr = this.GetConfigVal(config, "collectionName");
-            if (!string.IsNullOrEmpty(collectionNameStr))
-                _collectionName = collectionNameStr;
-            
-
             // Initialize the abstract base class.
             base.Initialize(name, config);
 
@@ -145,7 +129,7 @@ namespace MongoSessionStateStore
             _config = (SessionStateSection)cfg.GetSection("system.web/sessionState");
 
             // Initialize connection string.
-            _connectionStringSettings = ConfigurationManager.ConnectionStrings[this.GetConfigVal(config, "connectionStringName")];
+            _connectionStringSettings = ConfigurationManager.ConnectionStrings[config["connectionStringName"]];
 
             if (_connectionStringSettings == null || _connectionStringSettings.ConnectionString.Trim() == "")
             {
@@ -156,27 +140,25 @@ namespace MongoSessionStateStore
 
             // Initialize WriteExceptionsToEventLog
             _writeExceptionsToEventLog = false;
-            var writeExceptionsToEventLogStr = this.GetConfigVal(config, "writeExceptionsToEventLog");
 
-            if (!string.IsNullOrEmpty(writeExceptionsToEventLogStr))
+            if (config["writeExceptionsToEventLog"] != null)
             {
-                if (writeExceptionsToEventLogStr.ToUpper() == "TRUE")
+                if (config["writeExceptionsToEventLog"].ToUpper() == "TRUE")
                     _writeExceptionsToEventLog = true;
             }
 
 
             // Write concern options j (journal) and w (write ack #)
-            
-            bool journal = false;
-            var journalStr = this.GetConfigVal(config, "Journal");
-            if (!string.IsNullOrEmpty(journalStr))
-            {
-                if (!bool.TryParse(journalStr, out journal))
-                    throw new Exception("Journal must be a valid value (true or false)");
 
-                if (journal)
-                    _writeConcern = new WriteConcern() { Journal = true };
-            }
+            bool journal = false;
+            //if (config["Journal"] != null)
+            //{
+            //    if (!bool.TryParse(config["Journal"], out journal))
+            //        throw new Exception("Journal must be a valid value (true or false)");
+
+            //    if (journal)
+            //        _writeConcern = WriteConcern.WMajority;
+            //}
 
             // If journal (j) is true, write ack # param (w) not applies.
             // Only the primary node will confirm the journal writing
@@ -184,11 +166,11 @@ namespace MongoSessionStateStore
             if (!journal)
             {
                 _writeConcern = WriteConcern.W1;
-                var writeConcernStr = this.GetConfigVal(config, "WriteConcern");
-                if (!string.IsNullOrEmpty(writeConcernStr))
+                if (config["WriteConcern"] != null)
                 {
-                    writeConcernStr = writeConcernStr.ToUpper();
-                    switch (writeConcernStr)
+                    string WCStr = config["WriteConcern"];
+                    WCStr = WCStr.ToUpper();
+                    switch (WCStr)
                     {
                         case "W1":
                             _writeConcern = WriteConcern.W1;
@@ -199,59 +181,48 @@ namespace MongoSessionStateStore
                         case "W3":
                             _writeConcern = WriteConcern.W3;
                             break;
-                        case "W4":
-                            _writeConcern = WriteConcern.W4;
-                            break;
+                        //case "W4":
+                        //    _writeConcern = WriteConcern.W4;
+                        //    break;
                         case "WMAJORITY":
                             _writeConcern = WriteConcern.WMajority;
                             break;
                         default:
-                            throw new Exception("WriteConcern must be a valid value W1, W2, W3, W4 or WMAJORITY");
+                            throw new Exception("WriteConcern must be a valid value W1, W2, W3 or WMAJORITY");
                     }
                 }
             }
 
             // Initialize maxUpsertAttempts
             _maxUpsertAttempts = 220;
-            var maxUpsertAttemptsStr = this.GetConfigVal(config, "maxUpsertAttempts");
-            if (!string.IsNullOrEmpty(maxUpsertAttemptsStr))
+            if (config["maxUpsertAttempts"] != null)
             {
-                if (!int.TryParse(maxUpsertAttemptsStr, out _maxUpsertAttempts))
+                if (!int.TryParse(config["maxUpsertAttempts"], out _maxUpsertAttempts))
                     throw new Exception("maxUpsertAttempts must be a valid integer");
             }
 
             //initialize msWaitingForAttempt
             _msWaitingForAttempt = 500;
-            var msWaitingForAttemptStr = this.GetConfigVal(config, "msWaitingForAttempt");
-            if (!string.IsNullOrEmpty(msWaitingForAttemptStr))
+            if (config["msWaitingForAttempt"] != null)
             {
-                if (!int.TryParse(msWaitingForAttemptStr, out _msWaitingForAttempt))
+                if (!int.TryParse(config["msWaitingForAttempt"], out _msWaitingForAttempt))
                     throw new Exception("msWaitingForAttempt must be a valid integer");
             }
 
             //Initialize AutoCreateTTLIndex
             _autoCreateTTLIndex = true;
-            var autoCreateTTLIndexStr = this.GetConfigVal(config, "AutoCreateTTLIndex");
-            if (!string.IsNullOrEmpty(autoCreateTTLIndexStr))
+            if (config["AutoCreateTTLIndex"] != null)
             {
-                if (!bool.TryParse(autoCreateTTLIndexStr, out _autoCreateTTLIndex))
+                if (!bool.TryParse(config["AutoCreateTTLIndex"], out _autoCreateTTLIndex))
                     throw new Exception("AutoCreateTTLIndex must be true or false");
             }
 
             //Create TTL index if AutoCreateTTLIndex config parameter is true.
-            if(_autoCreateTTLIndex)
+            if (_autoCreateTTLIndex)
             {
                 var conn = GetConnection();
                 var sessionCollection = GetSessionCollection(conn);
                 MongoSessionStateStoreHelpers.CreateTTLIndex(sessionCollection);
-            }
-
-            //Initializes if BSON is the default format for serialize
-            _BSONDefaultSerialize = true;
-            var BSONDefaultSerializeStr = this.GetConfigVal(config, "BSONDefaultSerialize");
-            if(!string.IsNullOrEmpty(BSONDefaultSerializeStr))
-            {
-                bool.TryParse(BSONDefaultSerializeStr, out _BSONDefaultSerialize);
             }
         }
 
@@ -280,11 +251,10 @@ namespace MongoSessionStateStore
             object lockId,
             bool newItem)
         {
-            BsonArray jsonArraySession, bsonArraySession;
-            this.Serialize(item, out jsonArraySession, out bsonArraySession);
+            BsonArray arraySession = MongoSessionStateStoreHelpers.Serialize(item);
 
-            MongoServer conn = GetConnection();
-            MongoCollection sessionCollection = GetSessionCollection(conn);
+            MongoClient conn = GetConnection();
+            var sessionCollection = GetSessionCollection(conn);
 
             if (newItem)
             {
@@ -296,23 +266,24 @@ namespace MongoSessionStateStore
                     lockId: 0,
                     timeout: item.Timeout,
                     locked: false,
-                    jsonSessionItemsArray: jsonArraySession,
-                    bsonSessioNItemsArray: bsonArraySession,
+                    jsonSessionItemsArray: arraySession,
                     flags: 0);
 
                 this.UpsertEntireSessionDocument(sessionCollection, insertDoc);
             }
             else
             {
-                var query = Query.And(
-                    Query.EQ("_id", MongoSessionStateStoreHelpers.GetDocumentSessionId(id, ApplicationName)),
-                    Query.EQ("LockId",
-                    (Int32)lockId));
-                var update = Update.Set("Expires", DateTime.Now.AddMinutes(item.Timeout).ToUniversalTime());
-                update.Set("SessionItemJSON", jsonArraySession);
-                update.Set("SessionItemBSON", bsonArraySession);
-                update.Set("Locked", false);
-                this.UpdateSessionCollection(sessionCollection, query, update);
+                var filter = Builders<BsonDocument>.Filter.And(
+                        Builders<BsonDocument>.Filter.Eq("_id", MongoSessionStateStoreHelpers.GetDocumentSessionId(id, ApplicationName)),
+                        Builders<BsonDocument>.Filter.Eq("LockId", (Int32)lockId)
+                    );
+
+                var update = Builders<BsonDocument>.Update
+                    .Set("Expires", DateTime.Now.AddMinutes(item.Timeout).ToUniversalTime())
+                    .Set("SessionItemJSON", arraySession)
+                    .Set("Locked", false);
+
+                this.UpdateSessionCollection(sessionCollection, filter, update);
             }
         }
 
@@ -369,13 +340,12 @@ namespace MongoSessionStateStore
             locked = false;
             actionFlags = 0;
 
-            MongoServer conn = GetConnection();
-            MongoCollection sessionCollection = GetSessionCollection(conn);
+            MongoClient conn = GetConnection();
+            var sessionCollection = GetSessionCollection(conn);
 
             // DateTime to check if current session item is expired.
             // String to hold serialized SessionStateItemCollection.
-            BsonArray jsonSerializedItems = new BsonArray();
-            BsonArray bsonSerializedItems = new BsonArray();
+            BsonArray serializedItems = new BsonArray();
             // True if a record is found in the database.
             bool foundRecord = false;
             // True if the returned session item is expired and needs to be deleted.
@@ -387,21 +357,25 @@ namespace MongoSessionStateStore
             // lockRecord is true when called from GetItemExclusive and
             // false when called from GetItem.
             // Obtain a lock if possible. Ignore the record if it is expired.
-            IMongoQuery query;
+            FilterDefinition<BsonDocument> query;
             if (lockRecord)
             {
-                query = Query.And(Query.EQ("_id", MongoSessionStateStoreHelpers.GetDocumentSessionId(id, ApplicationName)),
-                    Query.EQ("Locked", false),
-                    Query.GT("Expires", DateTime.Now.ToUniversalTime()));
-                var update = Update.Set("Locked", true);
-                update.Set("LockDate", DateTime.Now.ToUniversalTime());
+                query = Builders<BsonDocument>.Filter.And(
+                        Builders<BsonDocument>.Filter.Eq("_id", MongoSessionStateStoreHelpers.GetDocumentSessionId(id, ApplicationName)),
+                        Builders<BsonDocument>.Filter.Eq("Locked", false),
+                        Builders<BsonDocument>.Filter.Gt("Expires", DateTime.Now.ToUniversalTime()));
+
+                var update = Builders<BsonDocument>.Update.Set("Locked", true)
+                    .Set("LockDate", DateTime.Now.ToUniversalTime());
                 var result = this.UpdateSessionCollection(sessionCollection, query, update);
 
-                locked = result.DocumentsAffected == 0; // DocumentsAffected == 0 == No record was updated because the record was locked or not found.
+                if (result.IsAcknowledged)
+                    locked = result.ModifiedCount == 0; // DocumentsAffected == 0 == No record was updated because the record was locked or not found.
             }
 
             // Retrieve the current session item information.
-            query = Query.And(Query.EQ("_id", MongoSessionStateStoreHelpers.GetDocumentSessionId(id, ApplicationName)));
+            query = Builders<BsonDocument>.Filter.Eq("_id", MongoSessionStateStoreHelpers.GetDocumentSessionId(id, ApplicationName));
+
             var results = this.FindOneSessionItem(sessionCollection, query);
 
             if (results != null)
@@ -418,8 +392,7 @@ namespace MongoSessionStateStore
                 else
                     foundRecord = true;
 
-                jsonSerializedItems = results["SessionItemJSON"].AsBsonArray;
-                bsonSerializedItems = results["SessionItemBSON"].AsBsonArray;
+                serializedItems = results["SessionItemJSON"].AsBsonArray;
                 lockId = results["LockId"].AsInt32;
                 lockAge = DateTime.Now.ToUniversalTime().Subtract(results["LockDate"].ToUniversalTime());
                 actionFlags = (SessionStateActions)results["Flags"].AsInt32;
@@ -430,7 +403,7 @@ namespace MongoSessionStateStore
             // delete the record from the data source.
             if (deleteData)
             {
-                query = Query.And(Query.EQ("_id", MongoSessionStateStoreHelpers.GetDocumentSessionId(id, ApplicationName)));
+                query = Builders<BsonDocument>.Filter.Eq("_id", MongoSessionStateStoreHelpers.GetDocumentSessionId(id, ApplicationName));
                 this.DeleteSessionDocument(sessionCollection, query);
             }
 
@@ -445,16 +418,16 @@ namespace MongoSessionStateStore
             {
                 lockId = (int)lockId + 1;
 
-                query = Query.And(Query.EQ("_id", MongoSessionStateStoreHelpers.GetDocumentSessionId(id, ApplicationName)));
-                var update = Update.Set("LockId", (int)lockId);
-                update.Set("Flags", 0);
+                query = Builders<BsonDocument>.Filter.Eq("_id", MongoSessionStateStoreHelpers.GetDocumentSessionId(id, ApplicationName));
+
+                var update = Builders<BsonDocument>.Update.Set("LockId", (int)lockId).Set("Flags", 0);
                 this.UpdateSessionCollection(sessionCollection, query, update);
 
                 // If the actionFlags parameter is not InitializeItem, 
                 // deserialize the stored SessionStateItemCollection.
                 item = actionFlags == SessionStateActions.InitializeItem
                     ? CreateNewStoreData(context, (int)_config.Timeout.TotalMinutes)
-                    : MongoSessionStateStoreHelpers.Deserialize(context, jsonSerializedItems, bsonSerializedItems, timeout);
+                    : MongoSessionStateStoreHelpers.Deserialize(context, serializedItems, timeout);
             }
 
             return item;
@@ -462,8 +435,8 @@ namespace MongoSessionStateStore
 
         public override void CreateUninitializedItem(HttpContext context, string id, int timeout)
         {
-            MongoServer conn = GetConnection();
-            MongoCollection sessionCollection = GetSessionCollection(conn);
+            MongoClient conn = GetConnection();
+            IMongoCollection<BsonDocument> sessionCollection = GetSessionCollection(conn);
             var doc = MongoSessionStateStoreHelpers.GetNewBsonSessionDocument(
                 id: id,
                 applicationName: ApplicationName,
@@ -473,7 +446,6 @@ namespace MongoSessionStateStore
                 timeout: timeout,
                 locked: false,
                 jsonSessionItemsArray: new BsonArray(),
-                bsonSessioNItemsArray: new BsonArray(),
                 flags: 1);
 
             this.UpsertEntireSessionDocument(sessionCollection, doc);
@@ -495,38 +467,40 @@ namespace MongoSessionStateStore
 
         public override void ReleaseItemExclusive(HttpContext context, string id, object lockId)
         {
-            MongoServer conn = GetConnection();
-            MongoCollection sessionCollection = GetSessionCollection(conn);
+            MongoClient conn = GetConnection();
+            IMongoCollection<BsonDocument> sessionCollection = GetSessionCollection(conn);
 
-            var query = Query.And(
-                Query.EQ("_id", MongoSessionStateStoreHelpers.GetDocumentSessionId(id, ApplicationName)),
-                Query.EQ("LockId", (Int32)lockId));
-            var update = Update.Set("Locked", false);
-            update.Set("Expires", DateTime.Now.AddMinutes(_config.Timeout.TotalMinutes).ToUniversalTime());
+            var filter = Builders<BsonDocument>.Filter.And(
+                    Builders<BsonDocument>.Filter.Eq("_id", MongoSessionStateStoreHelpers.GetDocumentSessionId(id, ApplicationName)),
+                    Builders<BsonDocument>.Filter.Eq("LockId", (Int32)lockId));
 
-            this.UpdateSessionCollection(sessionCollection, query, update);
+            var update = Builders<BsonDocument>.Update.Set("Locked", false)
+                .Set("Expires", DateTime.Now.AddMinutes(_config.Timeout.TotalMinutes).ToUniversalTime());
+
+            this.UpdateSessionCollection(sessionCollection, filter, update);
         }
 
         public override void RemoveItem(HttpContext context, string id, object lockId, SessionStateStoreData item)
         {
-            MongoServer conn = GetConnection();
-            MongoCollection sessionCollection = GetSessionCollection(conn);
+            MongoClient conn = GetConnection();
+            IMongoCollection<BsonDocument> sessionCollection = GetSessionCollection(conn);
 
-            var query = Query.And(
-                Query.EQ("_id", MongoSessionStateStoreHelpers.GetDocumentSessionId(id, ApplicationName)),
-                Query.EQ("LockId", (Int32)lockId));
+            var filter = Builders<BsonDocument>.Filter.And(
+                    Builders<BsonDocument>.Filter.Eq("_id", MongoSessionStateStoreHelpers.GetDocumentSessionId(id, ApplicationName)),
+                    Builders<BsonDocument>.Filter.Eq("LockId", (Int32)lockId));
 
-            this.DeleteSessionDocument(sessionCollection, query);
+            this.DeleteSessionDocument(sessionCollection, filter);
         }
 
         public override void ResetItemTimeout(HttpContext context, string id)
         {
-            MongoServer conn = GetConnection();
-            MongoCollection sessionCollection = GetSessionCollection(conn);
-            var query = Query.And(Query.EQ("_id", MongoSessionStateStoreHelpers.GetDocumentSessionId(id, ApplicationName)));
-            var update = Update.Set("Expires", DateTime.Now.AddMinutes(_config.Timeout.TotalMinutes).ToUniversalTime());
+            MongoClient conn = GetConnection();
+            IMongoCollection<BsonDocument> sessionCollection = GetSessionCollection(conn);
 
-            this.UpdateSessionCollection(sessionCollection, query, update);
-        }        
+            var filter = Builders<BsonDocument>.Filter.Eq("_id", MongoSessionStateStoreHelpers.GetDocumentSessionId(id, ApplicationName));
+            var update = Builders<BsonDocument>.Update.Set("Expires", DateTime.Now.AddMinutes(_config.Timeout.TotalMinutes).ToUniversalTime());
+
+            this.UpdateSessionCollection(sessionCollection, filter, update);
+        }
     }
 }

@@ -89,7 +89,7 @@ namespace TestApplication.Tests
                 request2 = (HttpWebRequest)WebRequest.Create(TestHelpers_v1_0.BASE_URL + TestHelpers_v1_0.PRINT_SESION_ACTION);
             TestHelpers_v1_0.DoRequest(request1, cookieContainer);
             string result = TestHelpers_v1_0.DoRequest(request2, cookieContainer);
-            StringAssert.Contains(result, string.Format("<sessionVal>{0}</sessionVal>", "3,1416"));
+            StringAssert.Contains(result, string.Format("<sessionVal>{0}</sessionVal>", "3.1416"));
         }
 
         /// <summary>

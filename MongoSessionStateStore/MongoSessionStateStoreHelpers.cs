@@ -1,6 +1,5 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
-using MongoDB.Driver.Builders;
 using MongoDB.Bson.Serialization;
 using System;
 using System.Collections.Generic;
@@ -15,18 +14,6 @@ namespace MongoSessionStateStore
 {
     internal static class MongoSessionStateStoreHelpers
     {
-        internal static string GetConfigVal(
-            this MongoSessionStateStore obj,
-            System.Collections.Specialized.NameValueCollection config,
-            string parameterName)
-        {
-            var key = config.AllKeys.FirstOrDefault(x => string.Compare(x, parameterName, true) == 0);
-            if ((!string.IsNullOrEmpty(key) && (!string.IsNullOrEmpty(config[key]))))
-                return config[key];
-            else
-                return "";
-        }
-
         internal static string GetDocumentSessionId(
             string sessionId,
             string applicationName)
@@ -42,8 +29,7 @@ namespace MongoSessionStateStore
             int lockId,
             int timeout,
             bool locked,
-            BsonArray jsonSessionItemsArray,
-            BsonArray bsonSessioNItemsArray,
+            BsonArray jsonSessionItemsArray = null,
             int flags = 1)
         {
             return new BsonDocument
@@ -58,25 +44,26 @@ namespace MongoSessionStateStore
                     {"Timeout", timeout},
                     {"Locked", locked},
                     {"SessionItemJSON", jsonSessionItemsArray},
-                    {"SessionItemBSON", bsonSessioNItemsArray},
                     {"Flags", flags}
                 };
         }
-        
+
         /// <summary>
         /// Creates TTL index if does not exist in collection.
         /// TTL index will remove the expired session documents.
         /// </summary>
         internal static bool CreateTTLIndex(
-            MongoCollection sessionCollection)
+            IMongoCollection<BsonDocument> sessionCollection)
         {
             while (true)
             {
                 try
                 {
-                    sessionCollection.CreateIndex(
-                        IndexKeys.Ascending("Expires"),
-                        IndexOptions.SetTimeToLive(TimeSpan.Zero));
+                    var idx = Builders<BsonDocument>.IndexKeys.Ascending("Expires");
+                    var option = new CreateIndexOptions();
+                    option.ExpireAfter = TimeSpan.Zero;
+                    var task = sessionCollection.Indexes.CreateOneAsync(idx, option);
+                    task.Wait();
                     return true;
                 }
                 catch (Exception)
@@ -85,20 +72,22 @@ namespace MongoSessionStateStore
                     // you should create it or clear the documents manually
                     return false;
                 }
-            }            
+            }
         }
 
         internal static BsonDocument FindOneSessionItem(
             this MongoSessionStateStore obj,
-            MongoCollection sessionCollection,
-            IMongoQuery q)
+            IMongoCollection<BsonDocument> sessionCollection,
+            FilterDefinition<BsonDocument> q)
         {
             int nAtempts = 0;
             while (true)
             {
                 try
                 {
-                    return sessionCollection.FindOneAs<BsonDocument>(q);                    
+                    var task = sessionCollection.Find(q).FirstOrDefaultAsync();
+                    task.Wait();
+                    return task.Result;
                 }
                 catch (Exception e)
                 {
@@ -107,48 +96,53 @@ namespace MongoSessionStateStore
             }
         }
 
-        internal static WriteConcernResult UpdateSessionCollection(
+        internal static UpdateResult UpdateSessionCollection(
             this MongoSessionStateStore obj,
-            MongoCollection sessionCollection,
-            IMongoQuery query,
-            UpdateBuilder update)
+            IMongoCollection<BsonDocument> sessionCollection,
+            FilterDefinition<BsonDocument> query,
+            UpdateDefinition<BsonDocument> update)
         {
             int attempts = 0;
             while (true)
             {
                 try
                 {
-                    return sessionCollection.Update(query, update, obj.SessionWriteConcern);                    
+                    var task = sessionCollection.UpdateManyAsync(query, update);
+                    task.Wait();
+                    return task.Result;
                 }
                 catch (Exception e)
                 {
-                    PauseOrThrow(ref attempts, obj, sessionCollection, e);                    
+                    PauseOrThrow(ref attempts, obj, sessionCollection, e);
                 }
             }
         }
 
-        internal static WriteConcernResult DeleteSessionDocument(
+        internal static DeleteResult DeleteSessionDocument(
            this MongoSessionStateStore obj,
-           MongoCollection sessionCollection,
-           IMongoQuery query)
+           IMongoCollection<BsonDocument> sessionCollection,
+           FilterDefinition<BsonDocument> query)
         {
             int attempts = 0;
             while (true)
             {
                 try
                 {
-                    return sessionCollection.Remove(query, obj.SessionWriteConcern);
+                    var task = sessionCollection.DeleteManyAsync(query);
+                    task.Wait();
+
+                    return task.Result;
                 }
                 catch (Exception e)
                 {
-                    PauseOrThrow(ref attempts, obj, sessionCollection, e);                    
+                    PauseOrThrow(ref attempts, obj, sessionCollection, e);
                 }
             }
         }
 
-        internal static WriteConcernResult UpsertEntireSessionDocument(
+        internal static void UpsertEntireSessionDocument(
             this MongoSessionStateStore obj,
-            MongoCollection sessionCollection,
+            IMongoCollection<BsonDocument> sessionCollection,
             BsonDocument insertDoc)
         {
             int attempts = 0;
@@ -156,11 +150,19 @@ namespace MongoSessionStateStore
             {
                 try
                 {
-                    return sessionCollection.Save(insertDoc.GetType(), insertDoc, obj.SessionWriteConcern);                    
+                    var task = sessionCollection.InsertOneAsync(insertDoc);
+                    task.Wait();
+
+                    if (task.IsFaulted)
+                    {
+                        throw new Exception("retry!");
+                    }
+
+                    return;
                 }
                 catch (Exception e)
                 {
-                    PauseOrThrow(ref attempts, obj, sessionCollection, e);                    
+                    PauseOrThrow(ref attempts, obj, sessionCollection, e);
                 }
             }
         }
@@ -168,7 +170,7 @@ namespace MongoSessionStateStore
         private static void PauseOrThrow(
             ref int attempts,
             MongoSessionStateStore obj,
-            MongoCollection sessionCollection,
+            IMongoCollection<BsonDocument> sessionCollection,
             Exception e)
         {
             if (attempts < obj.MaxUpsertAttempts)
@@ -182,69 +184,37 @@ namespace MongoSessionStateStore
             }
         }
 
-        internal static void Serialize(
-            this MongoSessionStateStore obj,
-            SessionStateStoreData item,
-            out BsonArray jsonarraySession,
-            out BsonArray bsonArraySession)
+        internal static BsonArray Serialize(SessionStateStoreData item)
         {
-            jsonarraySession = new BsonArray();
-            bsonArraySession = new BsonArray();
+            BsonArray arraySession = new BsonArray();
             for (int i = 0; i < item.Items.Count; i++)
             {
                 string key = item.Items.Keys[i];
-                var sessionObj = item.Items[key];
-                if (sessionObj is BsonValue)
-                {
-                    bsonArraySession.Add(new BsonDocument(key, sessionObj as BsonValue));
-                }
-                else
-                {
-                    if (obj._BSONDefaultSerialize)
-                    {
-                        BsonValue singleValue;
-
-                        if (BsonTypeMapper.TryMapToBsonValue(sessionObj, out singleValue))
-                            bsonArraySession.Add(new BsonDocument(key, singleValue));
-                        else
-                            bsonArraySession.Add(new BsonDocument(key, sessionObj.ToBsonDocument()));
-                    }
-                    else
-                    {
-                        jsonarraySession.Add(new BsonDocument(key, Newtonsoft.Json.JsonConvert.SerializeObject(sessionObj)));
-                    }
-                }
-            }            
+                arraySession.Add(new BsonDocument(key, Newtonsoft.Json.JsonConvert.SerializeObject(item.Items[key])));
+            }
+            return arraySession;
         }
 
         internal static SessionStateStoreData Deserialize(
             HttpContext context,
-            BsonArray jsonSerializedItems,
-            BsonArray bsonSerializedItems,
+            BsonArray serializedItems,
             int timeout)
         {
-            var sessionItems = new SessionStateItemCollection();
-            foreach (var value in jsonSerializedItems.Values)
-            {
-                var document = value as BsonDocument;
-                string name = document.Names.FirstOrDefault();                
-                string JSonValues = document.Values.FirstOrDefault().AsString;
-                sessionItems[name] = Newtonsoft.Json.JsonConvert.DeserializeObject(JSonValues);                
-            }
-
-            foreach(var value in bsonSerializedItems.Values)
+            var jSonSessionItems = new SessionStateItemCollection();
+            foreach (var value in serializedItems.Values)
             {
                 var document = value as BsonDocument;
                 string name = document.Names.FirstOrDefault();
-                sessionItems[name] = document.Values.FirstOrDefault();
+                string JSonValues = document.Values.FirstOrDefault().AsString;
+                jSonSessionItems[name] = Newtonsoft.Json.JsonConvert.DeserializeObject(JSonValues);
             }
 
-            return new SessionStateStoreData(sessionItems,
+            return new SessionStateStoreData(jSonSessionItems,
               SessionStateUtility.GetSessionStaticObjects(context),
               timeout);
         }
 
-        
+
         /// <summary>
         /// NOT used. It's preserved for future implementations.
         /// </summary>
