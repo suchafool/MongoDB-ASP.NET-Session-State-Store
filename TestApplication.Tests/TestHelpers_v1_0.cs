@@ -1,4 +1,5 @@
-﻿using System;
+﻿#define MVC5
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,7 +11,12 @@ namespace TestApplication.Tests
 {
     public static class TestHelpers_v1_0
     {
+#if MVC5
+        public static string BASE_URL = "http://localhost:8017/default/";
+#else
         public static string BASE_URL = "http://localhost/TestApplication/Default/";
+#endif
+
         public static string PRINT_SESION_ACTION = "PrintSessionVal/";
         public static string SET_SESSION_ACTION = "SetSessionVal/";
         public static string SESSION_ABANDON_ACTION = "SessionAbandon/";

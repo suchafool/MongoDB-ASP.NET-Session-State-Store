@@ -62,7 +62,7 @@ namespace TestApplication.Tests
         
     </fieldset>
 ";
-            StringAssert.Contains(result, expectedResultPart);
+            StringAssert.Contains(result.Replace("\t", "").Replace("\r\n", "").Replace("\r", "").Replace("\n", ""), expectedResultPart);
         }
 
         [TestMethod]
@@ -79,29 +79,16 @@ namespace TestApplication.Tests
 
             TestHelpers_v1_0.DoRequest(request1, cookieContainer);
             string result = TestHelpers_v1_0.DoRequest(request2, cookieContainer);
-            string expectedResultPart = @"<legend>Person</legend>
-    
-        <div class=""display-label"">
-            Name
-        </div>
-        <div class=""display-field"">
-            Marc
-        </div>
-    
-        <div class=""display-label"">
-            Surname
-        </div>
-        <div class=""display-field"">
-            Cortada
-        </div>
-    
-        <div class=""display-label"">
-            City
-        </div>
-        <div class=""display-field"">
-            Barcelona
-        </div>";
-            StringAssert.Contains(result, expectedResultPart);
+            string expectedResultPart = @"<legend>Person</legend><div class=""display-label"">Name</div><div class=""display-field"">Marc</div><div class=""display-label"">Surname</div><div class=""display-field"">Cortada</div><div class=""display-label"">City</div><div class=""display-field"">Barcelona</div>";
+            StringAssert.Contains(RemoveSpace(result)Replace("\n",""), expectedResultPart);
+        }
+
+        private string RemoveSpace(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return "";
+
+            return input.Replace("\t", "").Replace("\r\n", "").Replace("\r", "").Replace("\n", "").Replace(" ", "");
         }
     }
 }
