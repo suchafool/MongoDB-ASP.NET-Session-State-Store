@@ -113,12 +113,6 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\TestApplicationv2_0\TestApplicationv2_0.csproj">
-      <Project>{2498B537-7ECE-4066-B098-26588275B062}</Project>
-      <Name>TestApplicationv2_0</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

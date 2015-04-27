@@ -1,4 +1,5 @@
-﻿using System;
+﻿#define MVC5
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,7 +11,16 @@ namespace TestApplication2_0.Tests
 {
     public static class TestHelpers_v2_0
     {
+#if MVC5
+        public static string BASE_URL = "http://localhost:8018/Default/";
+        public static string BASE_URL_FORMS = "http://localhost:8018/";
+        public static string DEFAULT_WITH_HELPERS = "http://localhost:8018/DefaultWithHelpers/";
+#else
         public static string BASE_URL = "http://localhost/TestApplicationv2_0/Default/";
+        public static string BASE_URL_FORMS = "http://localhost/TestApplicationv2_0/";
+        public static string DEFAULT_WITH_HELPERS = "http://localhost/TestApplicationv2_0/DefaultWithHelpers/";
+#endif
+
         public static string PRINT_SESION_ACTION = "PrintSessionVal/";
         public static string PRINT_SESION_DOUBLE = "PrintSessionValDouble/";
         public static string SET_SESSION_ACTION = "SetSessionVal/";
@@ -23,11 +33,9 @@ namespace TestApplication2_0.Tests
         public static string SET_SESSION_VAL_JSON_SERIALIZELIST = "SerializePersonWithLists/";
         public static string PRINT_SESSION_VAL_JSON_SERIALIZELIST = "GetSerializedPersonWithPets/";
 
-        public static string BASE_URL_FORMS = "http://localhost/TestApplicationv2_0/";
         public static string SET_VALUE_WEB_FORM = "WebFormTests/SetValues.aspx";
         public static string GET_VALUE_WEB_FORM = "WebFormTests/GetValues.aspx";
 
-        public static string DEFAULT_WITH_HELPERS = "http://localhost/TestApplicationv2_0/DefaultWithHelpers/";
         public static string GET_AND_SET_SAME_REQUEST = "GetAndSetSameRequest/";
         public static string PRINT_SERIALIZED_PERSON = "PrintSessionSerializedPerson/";
         public static string PRINT_SERIALIZED_PERSON_WITH_LIST = "PrintSessionSerializedPersonWithlist/";
