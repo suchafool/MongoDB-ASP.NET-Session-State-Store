@@ -61,20 +61,20 @@ namespace TestApplicationv2_0.Controllers
         public ActionResult PrintSessionSerializedPerson()
         {
             Person p = Session.Mongo<Person>(KEY_NAME);
-            return View("~/Views/Default/GetSerializedPerson.cshmtl", p);
+            return View("~/Views/Default/GetSerializedPerson.aspx", p);
         }
 
         public ActionResult PrintSessionSerializedPersonWithlist()
         {
             PersonPetsList p = Session.Mongo<PersonPetsList>(KEY_NAME3);
-            return View("~/Views/Default/GetSerializedPersonWithPets.cshtml", p);
+            return View("~/Views/Default/GetSerializedPersonWithPets.aspx", p);
         }
 
         public ActionResult SetSessionValString(string newSesVal = "")
         {
             Session.Mongo<string>(KEY_NAME, newSesVal);
 
-            return View("~/Views/Default/SetSessionVal.cshtml");
+            return View("~/Views/Default/SetSessionVal.aspx");
         }
 
         public ActionResult PrintSessionValString()
@@ -82,7 +82,7 @@ namespace TestApplicationv2_0.Controllers
             string val = Session.Mongo<string>(KEY_NAME);
 
             ViewBag.sessionVal = val;
-            return View("~/Views/Default/PrintSessionVal.cshtml");
+            return View("~/Views/Default/PrintSessionVal.aspx");
         }
 
         public ActionResult SetSessionValDouble()
@@ -90,7 +90,7 @@ namespace TestApplicationv2_0.Controllers
             double newSesVal = 3.1416F;
             Session.Mongo<double>(KEY_NAME, newSesVal);
 
-            return View("~/Views/Default/SetSessionVal.cshtml");
+            return View("~/Views/Default/SetSessionVal.aspx");
         }
 
         public ActionResult PrintSessionValDouble()
@@ -98,30 +98,29 @@ namespace TestApplicationv2_0.Controllers
             double dobVal = Session.Mongo<double>(KEY_NAME);
 
             ViewBag.sessionVal = string.Format("{0:0.0000}", dobVal);
-            return View("~/Views/Default/PrintSessionVal.cshtml");
+            return View("~/Views/Default/PrintSessionVal.aspx");
         }
 
         public ActionResult SetSessionValInt(int newSesVal = 0)
         {
             Session.Mongo<int>(KEY_NAME, newSesVal);
 
-            return View("~/Views/Default/SetSessionVal.cshtml");
+            return View("~/Views/Default/SetSessionVal.aspx");
         }
 
         public ActionResult PrintSessionValInt()
         {
-            //to me, when i save an int value into Mongo, I retrive back a long value.
-            long intVal = Session.Mongo<long>(KEY_NAME);
+            int intVal = Session.Mongo<int>(KEY_NAME);
 
             ViewBag.sessionVal = intVal;
-            return View("~/Views/Default/PrintSessionVal.cshtml");
+            return View("~/Views/Default/PrintSessionVal.aspx");
         }
 
         public ActionResult SetSessionValBool(bool newSesVal = false)
         {
             Session.Mongo<bool>(KEY_NAME, newSesVal);
 
-            return View("~/Views/Default/SetSessionVal.cshtml");
+            return View("~/Views/Default/SetSessionVal.aspx");
         }
 
         public ActionResult PrintSessionValBool()
@@ -129,7 +128,7 @@ namespace TestApplicationv2_0.Controllers
             bool boolVal = Session.Mongo<bool>(KEY_NAME);
 
             ViewBag.sessionVal = boolVal;
-            return View("~/Views/Default/PrintSessionVal.cshtml");
+            return View("~/Views/Default/PrintSessionVal.aspx");
         }
     }
 }
