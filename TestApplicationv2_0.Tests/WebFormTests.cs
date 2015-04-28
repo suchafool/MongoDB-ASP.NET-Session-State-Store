@@ -8,7 +8,7 @@ namespace TestApplicationv2_0.Tests
     [TestClass]
     public class WebFormTests
     {
-        [TestMethod]
+        //[TestMethod]
         public void GetAndSetValues()
         {
             CookieContainer cookieContainer = new CookieContainer();

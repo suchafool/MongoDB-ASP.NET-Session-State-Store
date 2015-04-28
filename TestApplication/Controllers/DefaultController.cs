@@ -29,20 +29,20 @@ namespace TestApplication.Controllers
         public ActionResult SetSessionValInt(int newSesVal = 0)
         {
             Session["value"] = newSesVal;
-            return View("~/Views/Default/SetSessionVal.aspx");
+            return View("~/Views/Default/SetSessionVal.cshtml");
         }
 
         public ActionResult SetSessionValBool(bool newSesVal = false)
         {
             Session["value"] = newSesVal;
-            return View("~/Views/Default/SetSessionVal.aspx");
+            return View("~/Views/Default/SetSessionVal.cshtml");
         }
 
         public ActionResult SetSessionValDecimal()
         {
             decimal newSesVal = 3.1416m;
             Session["value"] = newSesVal;
-            return View("~/Views/Default/SetSessionVal.aspx");
+            return View("~/Views/Default/SetSessionVal.cshtml");
         }
 
         public ActionResult SetSessionVal(string newSesVal = "")
