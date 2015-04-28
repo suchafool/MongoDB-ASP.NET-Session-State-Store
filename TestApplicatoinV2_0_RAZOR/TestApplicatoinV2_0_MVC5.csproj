@@ -123,21 +123,15 @@
     <Compile Include="..\MongoSessionStateStore\MongoSessionHelpers.cs">
       <Link>MongoSessionHelpers.cs</Link>
     </Compile>
-    <Compile Include="..\TestApplicationv2_0\Controllers\BsonDocumentController.cs">
-      <Link>Controllers\BsonDocumentController.cs</Link>
-    </Compile>
-    <Compile Include="..\TestApplicationv2_0\Controllers\DefaultController.cs">
-      <Link>Controllers\DefaultController.cs</Link>
-    </Compile>
-    <Compile Include="..\TestApplicationv2_0\Controllers\DefaultWithHelpersController.cs">
-      <Link>Controllers\DefaultWithHelpersController.cs</Link>
-    </Compile>
     <Compile Include="..\TestApplicationv2_0\Models\Person.cs">
       <Link>Models\Person.cs</Link>
     </Compile>
     <Compile Include="App_Start\BundleConfig.cs" />
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="Controllers\BsonDocumentController.cs" />
+    <Compile Include="Controllers\DefaultController.cs" />
+    <Compile Include="Controllers\DefaultWithHelpersController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
