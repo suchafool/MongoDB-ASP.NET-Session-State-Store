@@ -110,7 +110,7 @@ namespace TestApplicationv2_0.Controllers
 
         public ActionResult PrintSessionValInt()
         {
-            int intVal = Session.Mongo<int>(KEY_NAME);
+            long intVal = Session.Mongo<long>(KEY_NAME);
 
             ViewBag.sessionVal = intVal;
             return View("~/Views/Default/PrintSessionVal.aspx");

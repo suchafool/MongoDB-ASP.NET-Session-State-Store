@@ -61,7 +61,7 @@ namespace TestApplicationv2_0.Controllers
         public ActionResult PrintSessionSerializedPerson()
         {
             Person p = Session.Mongo<Person>(KEY_NAME);
-            return View("~/Views/Default/GetSerializedPerson.cshmtl", p);
+            return View("~/Views/Default/GetSerializedPerson.cshtml", p);
         }
 
         public ActionResult PrintSessionSerializedPersonWithlist()

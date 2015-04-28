@@ -6,6 +6,7 @@ using System.Web.Mvc;
 using TestApplicationv2_0.Models;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson;
+using Newtonsoft.Json.Linq;
 
 namespace TestApplicationv2_0.Controllers
 {
@@ -29,9 +30,8 @@ namespace TestApplicationv2_0.Controllers
 
         public ActionResult PrintSessionValDouble()
         {
-            var val = Session["value"] as BsonValue;
-            double dobVal = (double)BsonTypeMapper.MapToDotNetValue(val);
-            ViewBag.sessionVal = dobVal.ToString("G");
+            var val = (double)Session["value"];
+            ViewBag.sessionVal = val.ToString("G");
             return View("~/Views/Default/PrintSessionVal.aspx");
         }
 
@@ -88,9 +88,19 @@ namespace TestApplicationv2_0.Controllers
             Person p = new Person();
             if (Session["person"] != null)
             {
-                var obj = Session["person"] as BsonDocument;
-                if (obj != null)
-                    p = BsonSerializer.Deserialize<Person>(obj);
+                if (Session["person"] is BsonDocument)
+                {
+                    var obj = Session["person"] as BsonDocument;
+                    if (obj != null)
+                        p = BsonSerializer.Deserialize<Person>(obj);
+                }
+                else if (Session["person"] is JObject)
+                {
+                    var obj = Session["person"] as JObject;
+                    if (obj != null) {
+                        p = obj.ToObject<Person>();
+                    }
+                }
             }
             return View(p);
         }
@@ -118,9 +128,20 @@ namespace TestApplicationv2_0.Controllers
             PersonPetsList p = new PersonPetsList();
             if (Session["personWithPetsList"] != null)
             {
-                var obj = Session["personWithPetsList"] as BsonDocument;
-                if (obj != null)
-                    p = BsonSerializer.Deserialize<PersonPetsList>(obj);
+                if (Session["personWithPetsList"] is BsonDocument)
+                {
+                    var obj = Session["personWithPetsList"] as BsonDocument;
+                    if (obj != null)
+                        p = BsonSerializer.Deserialize<PersonPetsList>(obj);
+                }
+                else if (Session["personWithPetsList"] is JObject)
+                {
+                    var obj = Session["personWithPetsList"] as JObject;
+                    if (obj != null)
+                    {
+                        p = obj.ToObject<PersonPetsList>();
+                    }
+                }
             }
             return View(p);
         }

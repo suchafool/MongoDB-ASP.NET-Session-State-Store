@@ -26,10 +26,14 @@ namespace TestApplicationv2_0.Controllers
 
         public ActionResult GetPerson()
         {
+            //you shall not pass!
             var doc = Session.Mongo<BsonDocument>("BsonValueKey");
-            ViewBag.Name = doc.GetValue("Name");
-            ViewBag.Surname = doc.GetValue("Surname");
-            ViewBag.City = doc.GetValue("City");
+            if (doc != null)
+            {
+                ViewBag.Name = doc.GetValue("Name");
+                ViewBag.Surname = doc.GetValue("Surname");
+                ViewBag.City = doc.GetValue("City");
+            }
             return View();
         }
     }

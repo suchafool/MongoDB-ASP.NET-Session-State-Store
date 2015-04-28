@@ -4,6 +4,7 @@ using System.Web;
 using System.Web.SessionState;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 
 namespace MongoSessionStateStore.Helpers
 {
@@ -23,9 +24,27 @@ namespace MongoSessionStateStore.Helpers
             if (sessionObj is BsonValue)
                 return (T)BsonTypeMapper.MapToDotNetValue(sessionObj as BsonValue);
 
-            if (sessionObj is Newtonsoft.Json.Linq.JArray)
+            if (sessionObj is Newtonsoft.Json.Linq.JObject)
+                return ((JObject)sessionObj).ToObject<T>();
+
+            if (sessionObj is JArray)
             {
-                //return (T)BsonSerializer.Deserialize<T>(((JArray)sessionObj).ToBsonDocument());
+                var jarr = sessionObj as JArray;
+                if (typeof(T) == typeof(BsonDocument))
+                {
+                    var doc = new BsonDocument();
+
+                    foreach (var item in jarr)
+                    {
+                        doc.Add((string)item["Name"], BsonValue.Create(((JValue)item["Value"]).Value));
+                    }
+
+                    return (T)(object)doc;
+                }
+                else
+                {
+                    return jarr.ToObject<T>();
+                }
             }
             
 

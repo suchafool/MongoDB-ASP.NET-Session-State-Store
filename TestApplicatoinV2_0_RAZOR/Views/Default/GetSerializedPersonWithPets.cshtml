@@ -37,13 +37,13 @@
             <div class="display-field">
                 @Html.DisplayFor(model => model.City)
             </div>
-            @foreach (string petName in Model.PetsList)
+            @if (Model.PetsList != null) { 
+            foreach (string petName in Model.PetsList)
             {
-            
             <div class="display-field">
                 @Html.DisplayFor(model => petName)
             </div>
-            }
+            }}
         </fieldset>
         <p>
             @Html.ActionLink("Edit", "Edit", new { /* id=Model.PrimaryKey */ }) |

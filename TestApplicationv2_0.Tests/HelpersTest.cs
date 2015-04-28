@@ -29,7 +29,7 @@ namespace TestApplicationv2_0.Tests
                 TestHelpers_v2_0.DEFAULT_WITH_HELPERS +
                 TestHelpers_v2_0.PRINT_SERIALIZED_PERSON);
             string result = TestHelpers_v2_0.DoRequest(request, cookieContainer);
-            StringAssert.Contains(result, @"<fieldset>
+            StringAssert.Contains(TestHelpers_v2_0.RemoveSpace(result), TestHelpers_v2_0.RemoveSpace(@"<fieldset>
         <legend>Person</legend>
     
         <div class=""display-label"">
@@ -52,7 +52,7 @@ namespace TestApplicationv2_0.Tests
         <div class=""display-field"">
             Barcelona
         </div>
-    </fieldset>");
+    </fieldset>"));
         }
 
         [TestMethod]
@@ -65,7 +65,7 @@ namespace TestApplicationv2_0.Tests
                 TestHelpers_v2_0.PRINT_SERIALIZED_PERSON_WITH_LIST);
             string result = TestHelpers_v2_0.DoRequest(request, cookieContainer);
 
-            StringAssert.Contains(result, @"<fieldset>
+            StringAssert.Contains(TestHelpers_v2_0.RemoveSpace(result), TestHelpers_v2_0.RemoveSpace(@"<fieldset>
         <legend>PersonPetsList</legend>
 
         <div class=""display-label"">
@@ -100,7 +100,7 @@ namespace TestApplicationv2_0.Tests
             dog
         </div>
         
-    </fieldset>");
+    </fieldset>"));
         }
 
         [TestMethod]

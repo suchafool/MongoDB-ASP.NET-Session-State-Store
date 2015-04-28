@@ -6,6 +6,8 @@ using System.Web.Mvc;
 using TestApplicationv2_0.Models;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace TestApplicationv2_0.Controllers
 {
@@ -88,9 +90,23 @@ namespace TestApplicationv2_0.Controllers
             Person p = new Person();
             if (Session["person"] != null)
             {
-                var obj = Session["person"] as BsonDocument;
-                if (obj != null)
-                    p = BsonSerializer.Deserialize<Person>(obj);
+                var value = Session["person"];
+                if (value is BsonDocument)
+                {
+                    var obj = value as BsonDocument;
+
+                    if (obj != null)
+                        p = BsonSerializer.Deserialize<PersonPetsList>(obj);
+                }
+                else if (value is JObject)
+                {
+                    var obj = value as JObject;
+                    p = obj.ToObject<PersonPetsList>();
+                }
+                else
+                {
+                    Response.Write(value);
+                }
             }
             return View(p);
         }
@@ -118,9 +134,23 @@ namespace TestApplicationv2_0.Controllers
             PersonPetsList p = new PersonPetsList();
             if (Session["personWithPetsList"] != null)
             {
-                var obj = Session["personWithPetsList"] as BsonDocument;
-                if (obj != null)
-                    p = BsonSerializer.Deserialize<PersonPetsList>(obj);
+                var value = Session["personWithPetsList"];
+                if (value is BsonDocument)
+                {
+                    var obj = value as BsonDocument;
+
+                    if (obj != null)
+                        p = BsonSerializer.Deserialize<PersonPetsList>(obj);
+                }
+                else if (value is JObject)
+                {
+                    var obj = value as JObject;
+                    p = obj.ToObject<PersonPetsList>();
+                }
+                else
+                {
+                    Response.Write(value);
+                }
             }
             return View(p);
         }
