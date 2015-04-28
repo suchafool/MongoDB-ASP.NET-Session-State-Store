@@ -9,7 +9,7 @@ Note for this fork
 Usage
 =====
 
-1 - Install the [nuGet package](https://www.nuget.org/packages/MongoSessionStateStore/) into your solution.
+1 - Install the [nuGet package](https://www.nuget.org/packages/MongoSessionStateStore/) into your solution. (The original verion, not this fork)
 
 2 - Into web.config file add a <connectionStrings> section as detailed following **set connection parameters properly.**
 ```xml
