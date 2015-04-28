@@ -29,29 +29,29 @@ namespace TestApplicationv2_0.Controllers
 
         public ActionResult PrintSessionValDouble()
         {
-            var val = Session["value"] as BsonValue;
+            var val = Session.Mongo<double>("value");
             double dobVal = (double)BsonTypeMapper.MapToDotNetValue(val);
             ViewBag.sessionVal = dobVal.ToString("G");
-            return View("~/Views/Default/PrintSessionVal.aspx");
+            return View("~/Views/Default/PrintSessionVal.cshtml");
         }
 
         public ActionResult SetSessionValInt(int newSesVal = 0)
         {
             Session["value"] = newSesVal;
-            return View("~/Views/Default/SetSessionVal.aspx");
+            return View("~/Views/Default/SetSessionVal.cshtml");
         }
 
         public ActionResult SetSessionValBool(bool newSesVal = false)
         {
             Session["value"] = newSesVal;
-            return View("~/Views/Default/SetSessionVal.aspx");
+            return View("~/Views/Default/SetSessionVal.cshtml");
         }
 
         public ActionResult SetSessionValDouble()
         {
             double newSesVal = 3.1416F;
             Session["value"] = newSesVal;
-            return View("~/Views/Default/SetSessionVal.aspx");
+            return View("~/Views/Default/SetSessionVal.cshtml");
         }
 
         public ActionResult SetSessionVal(string newSesVal = "")

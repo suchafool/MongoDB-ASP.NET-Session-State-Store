@@ -2,6 +2,8 @@
 using MongoDB.Bson.Serialization;
 using System.Web;
 using System.Web.SessionState;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace MongoSessionStateStore.Helpers
 {
@@ -20,6 +22,12 @@ namespace MongoSessionStateStore.Helpers
 
             if (sessionObj is BsonValue)
                 return (T)BsonTypeMapper.MapToDotNetValue(sessionObj as BsonValue);
+
+            if (sessionObj is Newtonsoft.Json.Linq.JArray)
+            {
+                //return (T)BsonSerializer.Deserialize<T>(((JArray)sessionObj).ToBsonDocument());
+            }
+            
 
             return default(T);
         }

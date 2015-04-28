@@ -62,7 +62,7 @@ namespace TestApplication2_0.Tests
         
     </fieldset>
 ";
-            StringAssert.Contains(result, expectedResultPart);
+            StringAssert.Contains(TestHelpers_v2_0.RemoveSpace(result), TestHelpers_v2_0.RemoveSpace(expectedResultPart));
         }
 
         [TestMethod]
@@ -101,7 +101,7 @@ namespace TestApplication2_0.Tests
         <div class=""display-field"">
             Barcelona
         </div>";
-            StringAssert.Contains(result, expectedResultPart);
+            StringAssert.Contains(TestHelpers_v2_0.RemoveSpace(result), TestHelpers_v2_0.RemoveSpace(expectedResultPart));
         }
     }
 }

@@ -175,6 +175,7 @@
   <ItemGroup>
     <Content Include="packages.config" />
     <None Include="Project_Readme.html" />
+    <Content Include="Views\BsonDocument\GetPerson.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MongoSessionStateStore\MongoSessionStateStore.csproj">

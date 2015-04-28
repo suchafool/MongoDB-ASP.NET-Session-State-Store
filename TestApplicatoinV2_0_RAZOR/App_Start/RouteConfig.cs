@@ -14,10 +14,10 @@ namespace TestApplicatoinV2_0_RAZOR
             routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
 
             routes.MapRoute(
-                name: "Default",
-                url: "{controller}/{action}/{id}",
-                defaults: new { controller = "Home", action = "Index", id = UrlParameter.Optional }
-            );
+               name: "Default",
+               url: "{controller}/{action}/{newSesVal}",
+               defaults: new { controller = "Home", action = "Index", newSesVal = UrlParameter.Optional }
+           );
         }
     }
 }

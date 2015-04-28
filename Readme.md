@@ -37,6 +37,11 @@ Session.Mongo<int>("sessionKey", 1314);
 // Gets the value from key named "sessionKey"
 int n = Session.Mongo<int>("sessionKey");
 
+/*Seemed when retrive int value from mongosession, it should be converted to long. like:
+	long ln=Session.Mongo<long>("sessionKey");
+	int n=(int)ln; //if for sure.
+*/
+
 /* Note that decimal values must be converted to double.
    For non primitive objects you can use the same helper methods. */
 

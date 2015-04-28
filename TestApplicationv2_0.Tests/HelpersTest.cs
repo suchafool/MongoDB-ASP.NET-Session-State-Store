@@ -131,7 +131,7 @@ namespace TestApplicationv2_0.Tests
                 TestHelpers_v2_0.PRINT_SESSION_VAL_DOUBLE);
             TestHelpers_v2_0.DoRequest(request, cookieContainer);
             string result = TestHelpers_v2_0.DoRequest(request2, cookieContainer);
-            StringAssert.Contains(result, "<sessionVal>3,1416</sessionVal>");
+            StringAssert.Contains(result, "<sessionVal>3.1416</sessionVal>");
         }
 
         [TestMethod]

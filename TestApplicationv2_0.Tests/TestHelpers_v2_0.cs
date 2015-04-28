@@ -15,10 +15,12 @@ namespace TestApplication2_0.Tests
         public static string BASE_URL = "http://localhost:8018/Default/";
         public static string BASE_URL_FORMS = "http://localhost:8018/";
         public static string DEFAULT_WITH_HELPERS = "http://localhost:8018/DefaultWithHelpers/";
+        public static string DEFAULT_WITH_BSON = "http://localhost:8018/BsonDocument/";
 #else
         public static string BASE_URL = "http://localhost/TestApplicationv2_0/Default/";
         public static string BASE_URL_FORMS = "http://localhost/TestApplicationv2_0/";
         public static string DEFAULT_WITH_HELPERS = "http://localhost/TestApplicationv2_0/DefaultWithHelpers/";
+        public static string DEFAULT_WITH_BSON = "http://localhost/TestApplicationv2_0/BsonDocument/";
 #endif
 
         public static string PRINT_SESION_ACTION = "PrintSessionVal/";
@@ -48,7 +50,6 @@ namespace TestApplication2_0.Tests
         public static string SET_SESSION_VAL_BOOL_WITH_HELPERS = "SetSessionValBool/";
         public static string PRINT_SESSION_VAL_BOOL = "PrintSessionValBool/";
 
-        public static string DEFAULT_WITH_BSON = "http://localhost/TestApplicationv2_0/BsonDocument/";
         public static string SET_BSON_VAL = "SetPerson/";
         public static string GET_BSON_VAL = "GetPerson/";
 
@@ -60,6 +61,14 @@ namespace TestApplication2_0.Tests
             var stream = request.GetResponse().GetResponseStream();
             StreamReader reader = new StreamReader(stream);
             return reader.ReadToEnd();
+        }
+
+        public static string RemoveSpace(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return "";
+
+            return input.Replace("\t", "").Replace("\r\n", "").Replace("\r", "").Replace("\n", "").Replace(" ", "");
         }
     }
 }

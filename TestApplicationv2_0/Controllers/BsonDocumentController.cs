@@ -21,7 +21,7 @@ namespace TestApplicationv2_0.Controllers
             doc.Add("Surname", "Cortada");
             doc.Add("City", "Barcelona");
             Session.Mongo<BsonDocument>("BsonValueKey", doc);
-            return View("~/Views/DefaultWithHelpers/Index.aspx");
+            return View("~/Views/DefaultWithHelpers/Index.cshtml");
         }
 
         public ActionResult GetPerson()

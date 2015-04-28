@@ -20,11 +20,11 @@ namespace TestApplicationv2_0.Tests
                                     TestHelpers_v2_0.GET_BSON_VAL);
             TestHelpers_v2_0.DoRequest(request, cookieContainer);
             string result = TestHelpers_v2_0.DoRequest(request2, cookieContainer);
-            StringAssert.Contains(result, @"<result>
+            StringAssert.Contains(TestHelpers_v2_0.RemoveSpace(result), TestHelpers_v2_0.RemoveSpace(@"<result>
             Name: Marc
             Surname: Cortada
             City: Barcelona
-        </result>");
+        </result>"));
         }
     }
 }
