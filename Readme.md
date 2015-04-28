@@ -2,7 +2,7 @@ Note for this fork
 ====
 1 - Based on official MongoDb.Driver 2.0, and working fine on MVC5.
 
-2 - Tests in this solution is all passed.Check the test projects may help you pinpointing weird stuff quickly.
+2 - Tests in this solution are all passed. Check the test projects may help you pinpointing weird stuff quickly.
 
 
 
